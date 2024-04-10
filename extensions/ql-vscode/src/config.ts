@@ -69,6 +69,15 @@ export const VSCODE_SAVE_BEFORE_START_SETTING = new Setting(
   VSCODE_DEBUG_SETTING,
 );
 
+const VSCODE_GITHUB_ENTERPRISE_SETTING = new Setting(
+  "github-enterprise",
+  undefined,
+);
+export const VSCODE_GITHUB_ENTERPRISE_URI_SETTING = new Setting(
+  "uri",
+  VSCODE_GITHUB_ENTERPRISE_SETTING,
+);
+
 const ROOT_SETTING = new Setting("codeQL");
 
 // Telemetry configuration

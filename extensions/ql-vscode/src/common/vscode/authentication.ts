@@ -1,7 +1,9 @@
+import type { AuthenticationSession } from "vscode";
 import { authentication } from "vscode";
 import type { Octokit } from "@octokit/rest";
 import type { Credentials } from "../authentication";
 import { AppOctokit } from "../octokit";
+import { VSCODE_GITHUB_ENTERPRISE_URI_SETTING } from "../../config";
 
 export const GITHUB_AUTH_PROVIDER_ID = "github";
 
@@ -10,6 +12,11 @@ export const GITHUB_AUTH_PROVIDER_ID = "github";
 // For a comprehensive list of scopes, see:
 // https://docs.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps
 const SCOPES = ["repo", "gist", "read:packages"];
+
+enum AuthProvider {
+  github = "github",
+  githubEnterprise = "github-enterprise",
+}
 
 /**
  * Handles authentication to GitHub, using the VS Code [authentication API](https://code.visualstudio.com/api/references/vscode-api#authentication).
@@ -38,22 +45,26 @@ export class VSCodeCredentials implements Credentials {
   }
 
   async getAccessToken(): Promise<string> {
-    const session = await authentication.getSession(
-      GITHUB_AUTH_PROVIDER_ID,
-      SCOPES,
-      { createIfNone: true },
-    );
-
-    return session.accessToken;
+    return (await this.getSession(true)).accessToken;
   }
 
   async getExistingAccessToken(): Promise<string | undefined> {
-    const session = await authentication.getSession(
-      GITHUB_AUTH_PROVIDER_ID,
-      SCOPES,
-      { createIfNone: false },
-    );
+    return (await this.getSession(false))?.accessToken;
+  }
 
-    return session?.accessToken;
+  private async getSession(createIfNone: true): Promise<AuthenticationSession>;
+  private async getSession(
+    createIfNone: false,
+  ): Promise<AuthenticationSession | undefined>;
+
+  private async getSession(
+    createIfNone: boolean,
+  ): Promise<AuthenticationSession | undefined> {
+    const authProviderId = VSCODE_GITHUB_ENTERPRISE_URI_SETTING.getValue()
+      ? AuthProvider.githubEnterprise
+      : AuthProvider.github;
+    return await authentication.getSession(authProviderId, SCOPES, {
+      createIfNone,
+    });
   }
 }
